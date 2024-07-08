@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Combined Gene Regulatory Network Visualization</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
+  <script src="cytoscape-cola.js"></script>
+  <style>
+   
+	body {
+      font-family: helvetica;
+      font-size: 14px;
+
+	  
+  
+    }
+    #cy {
+      position: absolute;
+      left: 500px;
+      top: 20px;
+      width: calc(100% - 520px);
+      height: 100%;
+      z-index: 999;
+    }
+    #button-container {
+      position: absolute;
+      top: 70px;
+      left: 20px;
+    }
+    #graph-description {
+	  background-color: #f0f0f0;
+      position: absolute;
+      top: 250px;
+      left: 20px;
+	  padding: 20px;
+      border-radius: 5px;
+    }
+	
+    }
+    h1 {
+      margin-top: 20px;
+	  margin-left: 30px;
+    }
+    #input-size {
+      position: absolute;
+      top: 100px;
+      left: 20px;
+	  
+    }
+    #filter-buttons {
+      position: absolute;
+      top: 200px;
+      left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="tissue-title"> Gene Regulatory Network</h1>
+  <div id="button-container">
+    <button onclick="loadData('brain_kidney_vis.csv', 'Brain', 'Kidney')">Brain Amygdala - Kidney</button>
+    <button onclick="loadData('bladder_uterus_vis.csv', 'Bladder', 'Uterus')">Bladder - Uterus</button>
+    <button onclick="loadData('cervix_ectocervix_fallopian_tube_vis.csv', 'Cervix_ectocervix', 'Fallopian_tube')">Cervix ectocervix - Fallopian tube</button>
+  </div>
+  <div id="input-size">
+    <label for="inputSize">Input Size:</label>
+    <input type="number" id="inputSize" name="inputSize" min="1" value="10">
+	<h3 id="commonTFs"></h3>  
+    <h3 id="totalRows"></h3>
+  </div>
+  <div id="filter-buttons">
+    <button onclick="showOnlyCommonTF()">Show Only Common TF</button>
+    <button onclick="showAllData()">Show All Data</button>
+  </div>
+ <div id="graph-description">
+    <p>Node Colors:</p>
+    <ul>
+      <li><span style="color: blue;">Blue</span>: TF genes</li>
+      <li id="color-1"><span style="color: red;">Red</span>: kidney_transcript_id</li>
+      <li id="color-2"><span style="color: green;">Green</span>: brain_transcript_id</li>
+      <li><span style="color: gray;">Gray</span>: Target genes</li>
+    </ul>
+    <p>Edge Colors:</p>
+    <ul>
+      <li id="edge-color-1"><span style="color: red;">Red</span>: Kidney-related interactions</li>
+      <li id="edge-color-2"><span style="color: green;">Green</span>: Brain-related interactions</li>
+    </ul>
+    <p>Label Information:</p>
+    <ul>
+      <li id="regulation">Up/Down regulated in Brain tissue</li>
+      <li>0.05 > padj & |log2FoldChange| > 1.5</li>
+      <li>(Up/Down, log2FoldChange)</li>
+    </ul>
+  </div>
+  <div id="cy"></div>
+  <script>
+    let cy;
+    let allData;
+    let currentTissue1, currentTissue2;
+    function csvToJson(csv) {
+      const lines = csv.split('\n');
+      const headers = lines[0].split(',').map(header => header.trim());
+      const json = lines.slice(1, -1).map(line => {
+        const values = line.split(',').map(value => value.trim());
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = values[index];
+        });
+        return obj;
+      });
+      return json;
+    }
+
+
+
+    // Existing functions (csvToJson, createCytoscapeInstance, updateDescriptions) remain the same
+
+    function processData(data, size, tissue1, tissue2) {
+      return data.slice(0, size);
+    }
+
+    function generateElements(data, tissue1, tissue2) {
+      const elements = new Set();
+
+      const addElement = (element) => {
+        const key = JSON.stringify(element);
+        if (!elements.has(key)) {
+          elements.add(key);
+        }
+      };
+
+      data.forEach(entry => {
+        if (entry.is_common_TF === 'True') {
+          processCommonTF(entry, tissue1, tissue2, addElement);
+        } else {
+          processCommonTarget(entry, tissue1, tissue2, addElement);
+        }
+      });
+
+      return Array.from(elements).map(e => JSON.parse(e));
+    }
+
+function processCommonTF(entry, tissue1, tissue2, addElement) {
+      if (entry.TF_gene !== '0') {
+        let label = entry.TF_gene;
+        if (entry.log2FoldChange !== '0.0') {
+          if (entry.regulation_status === 'Upregulated') {
+            label += ' (up,'+ entry.log2FoldChange  + ')';
+          } if (entry.regulation_status === 'Downregulated') {
+            label += ' (down,'+ entry.log2FoldChange  + ')';
+          }
+        }
+        const tfGeneNode = { data: { id: entry.TF_gene, label: label, color: 'blue' } };
+        addElement(tfGeneNode);
+      }
+
+      [tissue1.toLowerCase(), tissue2.toLowerCase()].forEach((tissue, index) => {
+        const color = index === 0 ? 'red' : 'green';
+        const oppositeColor = index === 0 ? 'green' : 'red';
+        const tissueName = index === 0 ? tissue1 : tissue2;
+        const oppositeTissueName = index === 0 ? tissue2 : tissue1;
+
+        if (entry[`TF_transcript_id_${tissue}`] !== '0') {
+          let isoLabel = entry[`TF_transcript_id_${tissue}`];
+          let tissuePer = parseFloat(entry[`${tissue}_percentage`]).toFixed(2);
+          let tissuePerOp = parseFloat(entry[`${tissue}_opposite_percentage`]).toFixed(2);
+          if (tissuePer !== '0.00') {
+            isoLabel += `\n${tissueName}: ${tissuePer}`;
+          }
+          if (tissuePerOp !== '0.00') {
+            isoLabel += `\n${oppositeTissueName}: ${tissuePerOp}`;
+          }
+          
+          const tfTranscriptNode = { data: { id: entry[`TF_transcript_id_${tissue}`], label: isoLabel, parent: entry.TF_gene !== '0' ? entry.TF_gene : null, color: color } };
+          addElement(tfTranscriptNode);
+
+          // Create edge from TF transcript to target gene
+          const tfEdge = { data: { id: `${entry[`TF_transcript_id_${tissue}`]}-${entry[`target_gene_${tissue}`]}`, source: entry[`TF_transcript_id_${tissue}`], target: entry[`target_gene_${tissue}`], color: color } };
+          addElement(tfEdge);
+        }
+
+        if (entry[`target_transcript_id_${tissue}`] !== '0') {
+          const targetTranscriptNode = { data: { id: entry[`target_transcript_id_${tissue}`], label: entry[`target_transcript_id_${tissue}`], parent: entry[`target_gene_${tissue}`], color: color } };
+          addElement(targetTranscriptNode);
+        }
+
+        // Always add target gene node
+        const targetGeneNode = { data: { id: entry[`target_gene_${tissue}`], label: entry[`target_gene_${tissue}`], color: 'gray' } };
+        addElement(targetGeneNode);
+
+        // Create edge from TF gene to target gene if TF transcript is not present
+        if (entry[`TF_transcript_id_${tissue}`] === '0' && entry.TF_gene !== '0') {
+          const tfGeneEdge = { data: { id: `${entry.TF_gene}-${entry[`target_gene_${tissue}`]}`, source: entry.TF_gene, target: entry[`target_gene_${tissue}`], color: color } };
+          addElement(tfGeneEdge);
+        }
+      });
+    }
+
+  function processCommonTarget(entry, tissue1, tissue2, addElement) {
+  if (entry.TF_gene !== '0') {
+    let label = entry.TF_gene;
+    if (entry.log2FoldChange !== '0.0') {
+      if (entry.regulation_status === 'Upregulated') {
+        label += ' (up,' + entry.log2FoldChange + ')';
+      }
+      if (entry.regulation_status === 'Downregulated') {
+        label += ' (down,' + entry.log2FoldChange + ')';
+      }
+    }
+    const tfGeneNode = { data: { id: entry.TF_gene, label: label, color: 'gray' } };
+    addElement(tfGeneNode);
+  }
+  
+  // Process target genes (in blue) for both tissues
+  [tissue1, tissue2].forEach((tissue, index) => {
+    const targetGene = entry[`target_gene_${tissue.toLowerCase()}`];
+    const targetGeneNode = { data: { id: targetGene, label: targetGene, color: 'blue' } };
+    addElement(targetGeneNode);
+    
+    const targetTranscriptId = entry[`target_transcript_id_${tissue.toLowerCase()}`];
+    const tfTranscriptId = entry[`TF_transcript_id_${tissue.toLowerCase()}`];
+    const color = index === 0 ? 'red' : 'green';
+    
+    // Add TF transcript node
+    if (tfTranscriptId !== '0') {
+      const tfTranscriptNode = { data: { id: tfTranscriptId, label: tfTranscriptId, parent: entry.TF_gene, color: color } };
+      addElement(tfTranscriptNode);
+    }
+    
+    // Add target transcript node with isoform information and create edge to TF gene
+    if (targetTranscriptId !== '0') {
+      let isoLabel = targetTranscriptId;
+      let tissuePer = parseFloat(entry[`${tissue.toLowerCase()}_percentage`]).toFixed(2);
+      let tissuePerOp = parseFloat(entry[`${tissue.toLowerCase()}_opposite_percentage`]).toFixed(2);
+      if (tissuePer !== '0.00') {
+        isoLabel += `\n${tissue}: ${tissuePer}`;
+      }
+      if (tissuePerOp !== '0.00') {
+        isoLabel += `\n${index === 0 ? tissue2 : tissue1}: ${tissuePerOp}`;
+      }
+      const targetTranscriptNode = { data: { id: targetTranscriptId, label: isoLabel, parent: targetGene, color: color } };
+      addElement(targetTranscriptNode);
+      
+      if (entry.TF_gene !== '0') {
+        // Create edge from target transcript to TF gene
+        const edge = { data: { id: `${targetTranscriptId}-${entry.TF_gene}`, source: targetTranscriptId, target: entry.TF_gene, color: color } };
+        addElement(edge);
+      }
+    } else if (entry.TF_gene !== '0') {
+      // If no target transcript, create edge from target gene to TF gene
+      const edge = { data: { id: `${targetGene}-${entry.TF_gene}`, source: targetGene, target: entry.TF_gene, color: color } };
+      addElement(edge);
+    }
+  });
+}
+
+    function createCytoscapeInstance(elements) {
+      if (cy) {
+        cy.destroy();
+      }
+
+      cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements,
+        style: [
+          { selector: 'node[color="blue"]', style: { 'shape':'rectangle','background-color': 'blue', 'label': 'data(label)' } },
+          { selector: 'node[color="red"]', style: { 'background-color': 'red', 'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '200px' } },
+          { selector: 'node[color="green"]', style: { 'background-color': 'green','label':'data(label)', 'text-wrap': 'wrap', 'text-max-width': '200px' } },
+          { selector: 'node[color="gray"]', style: { 'shape': 'rectangle', 'background-color': 'gray', 'label': 'data(label)' } },
+          { selector: 'edge[color="red"]', style: { 'line-color': 'red', 'target-arrow-color': 'red','target-arrow-shape': 'triangle','curve-style': 'bezier' } },
+          { selector: 'edge[color="green"]', style: { 'line-color': 'green','target-arrow-color': 'green','target-arrow-shape': 'triangle','curve-style': 'bezier' } }
+        ],
+        layout: { name: 'cola' }
+      });
+    }
+function loadData(file, tissue1, tissue2) {
+      fetch(file)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.text();
+        })
+        .then(csvData => {
+          const jsonData = csvToJson(csvData);
+          allData = jsonData;
+          currentTissue1 = tissue1;
+          currentTissue2 = tissue2;
+          document.getElementById('tissue-title').innerText = `${tissue1} vs ${tissue2} Gene Regulatory Network`;
+          document.getElementById('totalRows').innerText = `Total networks: ${allData.length}`;
+          totalCommonTFs = allData.filter(entry => entry.is_common_TF === 'True').length;
+          document.getElementById('commonTFs').innerText = `Total Common TFs: ${totalCommonTFs}`;
+          showOnlyCommonTF();
+        })
+        .catch(error => console.error('Error fetching CSV:', error));
+    }
+  function updateVisualization() {
+      const size = parseInt(document.getElementById('inputSize').value);
+      const processedData = processData(allData, size);
+      const elements = generateElements(processedData, currentTissue1, currentTissue2);
+      createCytoscapeInstance(elements);
+      updateDescriptions(currentTissue1, currentTissue2);
+    }
+
+
+    function showAllData() {
+      updateVisualization();
+      updateDescriptions(currentTissue1, currentTissue2);
+    }
+
+    function showOnlyCommonTF() {
+      const size = parseInt(document.getElementById('inputSize').value);
+      const processedData = processData(allData, size);
+      const commonTFData = processedData.filter(entry => entry.is_common_TF === 'True');
+      const elements = generateElements(commonTFData, currentTissue1, currentTissue2);
+      createCytoscapeInstance(elements);
+    }
+
+    // Add event listener for input size change
+    document.getElementById('inputSize').addEventListener('change', updateVisualization);
+
+
+    function updateDescriptions(tissue1, tissue2) {
+      document.getElementById('color-1').innerHTML = `<span style="color: red;">Red</span>: ${tissue1} specific genes`;
+      document.getElementById('color-2').innerHTML = `<span style="color: green;">Green</span>: ${tissue2} specific genes`;
+      document.getElementById('edge-color-1').innerHTML = `<span style="color: red;">Red</span>: ${tissue1}-related interactions`;
+      document.getElementById('edge-color-2').innerHTML = `<span style="color: green;">Green</span>: ${tissue2}-related interactions`;
+      document.getElementById('regulation').innerHTML = `Up/Down regulated in ${tissue1} tissue`;
+    }
+
+    loadData('brain_kidney_vis.csv', 'Brain', 'Kidney');
+  </script>
+</body>
+</html>
