@@ -81,6 +81,8 @@ Folder containing the Jupyter Notebook and data files for the bladder-uterus com
 Folder containing the Jupyter Notebook and data files for the cervix ectocervix-fallopian tube comparison analysis.
 ### differential_expression_analysis/ 
 Folder containing the R script and data files for differential gene expression analysis using DESeq2.
+
+Note: Each tissue comparison folder contains a zipped file that needs to be unzipped before running the analysis.
 ### visualization/
 Folder containing the HTML file, cytoscape-cola-js, and CSV files for the GRN visualization tool.
 
