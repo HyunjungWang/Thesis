@@ -66,9 +66,10 @@ GTEx_Analysis_2017-06-05_v8_RSEMv1.3.0_transcript_tpm.gct.gz
 
 - GTEX samples
   
-For example, gene_reads_2017-06-05_v8_cervix_ectocervix.gct.gz
+The sample data for all the tissue comparisons in this repository (brain-kidney, bladder-uterus, and cervix ectocervix-fallopian tube) are already included in their respective directories (brain_kidney/, bladder_uterus/, and cervix_fallopiantube/). You don't need to download any additional sample data for these tissue comparisons.
+If you want to perform additional tissue comparisons in the future, you can download the corresponding sample data from the GTEx portal using the provided link.
 
-Users can extract GTEX sample id with util.extract_and_save_gtex_columns()
+Users can extract GTEX sample IDs with util.extract_and_save_gtex_columns()
 
 ## Repository Structure 
 ### util.py
@@ -83,6 +84,7 @@ Folder containing the Jupyter Notebook and data files for the cervix ectocervix-
 Folder containing the R script and data files for differential gene expression analysis using DESeq2.
 
 Note: Each tissue comparison folder contains a zipped file that needs to be unzipped before running the analysis.
+The compressed file can be either in .zip or .7z format.
 ### visualization/
 Folder containing the HTML file, cytoscape-cola-js, and CSV files for the GRN visualization tool.
 
