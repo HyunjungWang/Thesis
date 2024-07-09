@@ -66,9 +66,10 @@ GTEx_Analysis_2017-06-05_v8_RSEMv1.3.0_transcript_tpm.gct.gz
 
 - GTEX samples
   
-For example, gene_reads_2017-06-05_v8_cervix_ectocervix.gct.gz
+The sample data for all the tissue comparisons in this repository (brain-kidney, bladder-uterus, and cervix ectocervix-fallopian tube) are already included in their respective directories (brain_kidney/, bladder_uterus/, and cervix_fallopiantube/). You don't need to download any additional sample data for these tissue comparisons.
+If you want to perform additional tissue comparisons in the future, you can download the corresponding sample data from the GTEx portal using the provided link.
 
-Users can extract GTEX sample id with util.extract_and_save_gtex_columns()
+Users can extract GTEX sample IDs with util.extract_and_save_gtex_columns()
 
 ## Repository Structure 
 ### util.py
@@ -81,8 +82,11 @@ Folder containing the Jupyter Notebook and data files for the bladder-uterus com
 Folder containing the Jupyter Notebook and data files for the cervix ectocervix-fallopian tube comparison analysis.
 ### differential_expression_analysis/ 
 Folder containing the R script and data files for differential gene expression analysis using DESeq2.
+
+Note: Each tissue comparison folder contains a zipped file that needs to be unzipped before running the analysis.
+The compressed file can be either in .zip or .7z format.
 ### visualization/
-Folder containing the HTML file, cytoscape-cola-js, and CSV files for the GRN visualization tool.
+Folder containing the HTML file(GRN.html) and CSV files for the GRN visualization tool.
 
 
 ## Usage
@@ -118,7 +122,10 @@ Use merge_grn_with_percentages function to combine isoform percentages with GRN.
 Use map_names_GSEA_target and run_gsea functions to perform GSEA.
 
 ### Visualization:
-The GRN Visualization tool allows users to explore the alternative splicing-aware GRNs through a web browser. To use the visualization tool:
+The GRN Visualization tool allows users to explore the alternative splicing-aware GRNs through a web browser.
+This tool is implemented using HTML and JavaScript, leveraging the Cytoscape.js library for network visualization.
+
+To use the visualization tool:
 1. Ensure the GRN.html file and the visualization CSV files are in the visualization/ folder.
 2. Open a command prompt, navigate to the visualization/ folder, start a local Python HTTP server:
   ```
@@ -135,7 +142,4 @@ The GRN Visualization tool allows users to explore the alternative splicing-awar
 ## Copyright Notice
 
 This master's thesis, including all accompanying software, code, and data, is the intellectual property of [Hyunjung Wang], [2024]. All rights reserved. 
-
-This work is submitted as part of the requirements for a master's degree at [Your University Name]. It is shared confidentially with the thesis advisor and evaluation committee. Any reproduction or use of the content of this thesis, in whole or in part, requires explicit permission from the author.
-
 © [Hyunjung Wang] [2024]
