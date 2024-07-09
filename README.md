@@ -86,7 +86,7 @@ Folder containing the R script and data files for differential gene expression a
 Note: Each tissue comparison folder contains a zipped file that needs to be unzipped before running the analysis.
 The compressed file can be either in .zip or .7z format.
 ### visualization/
-Folder containing the HTML file(GRN.html) CSV files for the GRN visualization tool.
+Folder containing the HTML file(GRN.html) and CSV files for the GRN visualization tool.
 
 - GRN.html: The main HTML file for the visualization interface, including embedded JavaScript for network rendering
 - *.csv: Visualization data files for different tissue comparisons
