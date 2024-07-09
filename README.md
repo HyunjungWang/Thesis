@@ -132,7 +132,7 @@ To use the visualization tool:
 1. Ensure the GRN.html file and the visualization CSV files are in the visualization/ folder.
 2. Open a command prompt, navigate to the visualization/ folder, start a local Python HTTP server:
   ```
-    cd \Thesis\visualization
+    cd path\to\Thesis\visualization
     python -m http.server
   ```
 3. Open a web browser and go to http://localhost:8000/GRN.html
@@ -142,7 +142,12 @@ To use the visualization tool:
 
 
 
-## Copyright Notice
+## Copyright and Data attribution
 
-This master's thesis, including all accompanying software, code, and data, is the intellectual property of [Hyunjung Wang], [2024]. All rights reserved. 
-© [Hyunjung Wang] [2024]
+This master's thesis, including all accompanying software and code, is the intellectual property of Hyunjung Wang, 2024. All rights reserved. 
+© Hyunjung Wang 2024
+
+This work incorporates data from the following open sources:
+- GTEx (Genotype-Tissue Expression) project, Ensemble BioMart
+
+Users of this project are responsible for complying with the terms and conditions set by the original data providers.
