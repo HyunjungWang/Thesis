@@ -87,10 +87,10 @@
       <ul>
         <li><span style="color: blue">Blue</span>: TF genes</li>
         <li id="color-1">
-          <span style="color: red">Red</span>: brain_transcript_id
+          <span style="color: red">Red</span>: Brain isoforms
         </li>
         <li id="color-2">
-          <span style="color: green">Green</span>: kidney_transcript_id
+          <span style="color: green">Green</span>: Kidney isoforms
         </li>
         <li><span style="color: gray">Gray</span>: Target genes</li>
       </ul>
@@ -510,10 +510,10 @@
       function updateDescriptions(tissue1, tissue2) {
         document.getElementById(
           "color-1"
-        ).innerHTML = `<span style="color: red;">Red</span>: ${tissue1} specific genes`;
+        ).innerHTML = `<span style="color: red;">Red</span>: ${tissue1} isoforms`;
         document.getElementById(
           "color-2"
-        ).innerHTML = `<span style="color: green;">Green</span>: ${tissue2} specific genes`;
+        ).innerHTML = `<span style="color: green;">Green</span>: ${tissue2} isoforms`;
         document.getElementById(
           "edge-color-1"
         ).innerHTML = `<span style="color: red;">Red</span>: ${tissue1}-related interactions`;
